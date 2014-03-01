@@ -3023,6 +3023,12 @@ config MACH_T6_UL
         help
           Support for the HTC APQ8064 T6_UL.
 
+config MACH_T6_WHL
+        depends on ARCH_APQ8064
+        bool "APQ8064 T6_WHL"
+        help
+          Support for the HTC APQ8064 T6_WHL.
+
 config QSC_MODEM
         default n
         bool "QMC QSC MODEM"

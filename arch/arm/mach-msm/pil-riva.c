@@ -278,7 +278,11 @@ static int pil_riva_reset(struct pil_desc *pil)
 
 	
 #ifdef CONFIG_QUALCOMM_WLAN_PXO
+#if defined(CONFIG_MACH_T6_UL)
 	if (hw_ver_id >= APQ8064_HW_VER_1_0) {
+#elif defined(CONFIG_MACH_T6_WHL)
+	if (hw_ver_id >= APQ8064_HW_VER_2_0) {
+#endif
 		printk("[WLAN][SSR] Wait for PLL warm-up\n");
 		
 		while(nLoopCount > 0) 

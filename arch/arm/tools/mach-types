@@ -1230,3 +1230,4 @@ m7_evm			MACH_M7_EVM		M7_EVM			9999
 m7c_dug		MACH_M7C_DUG		M7C_DUG			4522
 m7c_dwg		MACH_M7C_DWG		M7C_DWG			4523
 t6_ul                   MACH_T6_UL              T6_UL                   4642
+t6_whl                  MACH_T6_WHL             T6_WHL                  4646
