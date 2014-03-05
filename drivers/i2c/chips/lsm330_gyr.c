@@ -1762,7 +1762,8 @@ err1_1:
 	mutex_unlock(&stat->lock);
 	kfree(stat->pdata);
 err1:
-	destroy_workqueue(lsm330_gyr_workqueue);
+	if (lsm330_gyr_workqueue)
+		destroy_workqueue(lsm330_gyr_workqueue);
 	kfree(stat);
 err0:
 		pr_err("%s: Driver Initialization failed\n",
@@ -1777,7 +1778,7 @@ static int lsm330_gyr_remove(struct i2c_client *client)
 	dev_info(&stat->client->dev, "driver removing\n");
 
 	lsm330_gyr_disable(stat);
-	if(!lsm330_gyr_workqueue) {
+	if(lsm330_gyr_workqueue) {
 		flush_workqueue(lsm330_gyr_workqueue);
 		destroy_workqueue(lsm330_gyr_workqueue);
 	}

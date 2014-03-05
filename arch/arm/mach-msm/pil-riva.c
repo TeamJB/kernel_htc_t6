@@ -278,11 +278,7 @@ static int pil_riva_reset(struct pil_desc *pil)
 
 	
 #ifdef CONFIG_QUALCOMM_WLAN_PXO
-#if defined(CONFIG_MACH_T6_UL)
 	if (hw_ver_id >= APQ8064_HW_VER_1_0) {
-#elif defined(CONFIG_MACH_T6_WHL)
-	if (hw_ver_id >= APQ8064_HW_VER_2_0) {
-#endif
 		printk("[WLAN][SSR] Wait for PLL warm-up\n");
 		
 		while(nLoopCount > 0) 
@@ -381,17 +377,8 @@ static int pil_riva_reset(struct pil_desc *pil)
 
 static int pil_riva_shutdown(struct pil_desc *pil)
 {
-	struct riva_data *drv = dev_get_drvdata(pil->dev);
-	u32 reg;
 
-	
-	reg = readl_relaxed(drv->base + RIVA_PMU_OVRD_VAL);
-	reg &= ~(RIVA_PMU_OVRD_VAL_CCPU_RESET | RIVA_PMU_OVRD_VAL_CCPU_CLK);
-	writel_relaxed(reg, drv->base + RIVA_PMU_OVRD_VAL);
-	reg = readl_relaxed(drv->base + RIVA_PMU_OVRD_EN);
-	reg |= RIVA_PMU_OVRD_EN_CCPU_RESET | RIVA_PMU_OVRD_EN_CCPU_CLK;
-	writel_relaxed(reg, drv->base + RIVA_PMU_OVRD_EN);
-	mb();
+	printk("[WLAN] pil_riva_shutdown");
 
 	
 	writel_relaxed(1, RIVA_RESET);

@@ -25,16 +25,16 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
-#include <linux/akm8963.h>
+#include <linux/akm8963_nst.h>
 #include <linux/export.h>
 #include <linux/module.h>
 
 #define AKM8963_DEBUG_IF	0
 #define AKM8963_DEBUG_DATA	0
 
-#define D(x...) printk(KERN_DEBUG "[COMP][AKM8963] " x)
-#define I(x...) printk(KERN_INFO "[COMP][AKM8963] " x)
-#define E(x...) printk(KERN_ERR "[COMP][AKM8963] " x)
+#define D(x...) printk(KERN_DEBUG "[COMP][AKM8963_NST] " x)
+#define I(x...) printk(KERN_INFO "[COMP][AKM8963_NST] " x)
+#define E(x...) printk(KERN_ERR "[COMP][AKM8963_NST] " x)
 
 #if AKM8963_DEBUG_DATA
 #define AKM_DATA(dev, ...) \
@@ -325,7 +325,7 @@ static int AKECS_GetData(
 
 static void AKECS_SetYPR(
 	struct akm8963_data *akm,
-	int *rbuf)
+	int32_t *rbuf)
 {
 	uint32_t ready;
 	AKM_DATA(&akm->i2c->dev, "AKM8963 %s: flag =0x%X", __func__,
@@ -360,6 +360,16 @@ static void AKECS_SetYPR(
 		input_report_abs(akm->input, ABS_RY, rbuf[6]);
 		input_report_abs(akm->input, ABS_RZ, rbuf[7]);
 		input_report_abs(akm->input, ABS_RUDDER, rbuf[8]);
+
+		
+		
+		input_report_abs(akm->input, ABS_GAS,   rbuf[12]);
+		input_report_abs(akm->input, ABS_BRAKE, rbuf[13]);
+		input_report_abs(akm->input, ABS_HAT2X, rbuf[14]);
+		input_report_abs(akm->input, ABS_HAT2Y, rbuf[15]);
+		input_report_abs(akm->input, ABS_HAT3X, rbuf[16]);
+		input_report_abs(akm->input, ABS_HAT3Y, rbuf[17]);
+		
 	}
 	
 	if (ready & ORI_DATA_READY) {
@@ -418,15 +428,15 @@ AKECS_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	struct akm8963_data *akm = file->private_data;
 
 	
-	char i2c_buf[RWBUF_SIZE];		
-	int8_t sensor_buf[SENSOR_DATA_SIZE];
-	int32_t ypr_buf[YPR_DATA_SIZE];	
-	int16_t acc_buf[3];				
-	int64_t delay[AKM_NUM_SENSORS];	
-	char mode;			
-	char layout;		
-	char outbit;		
-	int status;			
+	char i2c_buf[RWBUF_SIZE] = {0};				
+	int8_t sensor_buf[SENSOR_DATA_SIZE] = {0};	
+	int32_t ypr_buf[YPR_DATA_SIZE] = {0};		
+	int16_t acc_buf[3] = {0};					
+	int64_t delay[AKM_NUM_SENSORS] = {0};		
+	char mode = 0;		
+	char layout = 0;	
+	char outbit = 0;	
+	int status = 0;		
 	int ret = -1;		
 
 	switch (cmd) {
@@ -1187,6 +1197,19 @@ static int akm8963_input_init(
 			-5760, 5760, 0, 0);
 	input_set_abs_params(*input, ABS_HAT1Y,
 			0, 3, 0, 0);
+	
+	input_set_abs_params(*input, ABS_GAS,
+			-32768, 32767, 0, 0);
+	input_set_abs_params(*input, ABS_BRAKE,
+			-32768, 32767, 0, 0);
+	input_set_abs_params(*input, ABS_HAT2X,
+			-32768, 32767, 0, 0);
+	input_set_abs_params(*input, ABS_HAT2Y,
+			-32768, 32767, 0, 0);
+	input_set_abs_params(*input, ABS_HAT3X,
+			-32768, 32767, 0, 0);
+	input_set_abs_params(*input, ABS_HAT3Y,
+			-32768, 32767, 0, 0);
 
 	
 	(*input)->name = "compass";
@@ -1255,7 +1278,7 @@ int akm8963_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	int i;
 
 	dev_dbg(&client->dev, "start probing.");
-	I("AKM8963 compass driver: probe.");
+	I("AKM8963 compass driver: probe with Magnetic Field Uncalibrated support!\n");
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "%s: check_functionality failed.",

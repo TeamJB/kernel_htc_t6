@@ -66,6 +66,12 @@ struct ci13xxx_qh {
 	struct usb_ctrlrequest   setup;
 } __attribute__ ((packed, aligned(4)));
 
+struct ci13xxx_multi_req {
+	unsigned             len;
+	unsigned             actual;
+	void                *buf;
+};
+
 struct ci13xxx_req {
 	struct usb_request   req;
 	unsigned             map;
@@ -74,6 +80,7 @@ struct ci13xxx_req {
 	dma_addr_t           dma;
 	struct ci13xxx_td   *zptr;
 	dma_addr_t           zdma;
+	struct ci13xxx_multi_req multi;
 };
 
 struct ci13xxx_ep {
@@ -100,6 +107,8 @@ struct ci13xxx_ep {
 	unsigned long			      prime_fail_count;
 	int				      prime_timer_count;
 	struct timer_list		      prime_timer;
+
+	bool                                  multi_req;
 };
 
 struct ci13xxx;

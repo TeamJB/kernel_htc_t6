@@ -14,33 +14,81 @@ static struct kobj_attribute _name##_attr = {	\
 }
 
 struct kobject *process_kobj;
+void show_block_state_work(struct work_struct *work);
+
 
 static DEFINE_RWLOCK(task_comm_lock);
 static LIST_HEAD(task_comm_list);
+static DECLARE_DELAYED_WORK(show_block_state_struct, show_block_state_work);
 
 struct task_comm {
 	struct list_head list;
 	char comm[TASK_COMM_LEN];
 };
 
+void show_block_state_work(struct work_struct *work){
+	printk(KERN_WARNING "### Show All Blocked State ###\n");
+	show_state_filter(TASK_UNINTERRUPTIBLE);
+}
+
 void send_signal_debug_dump(int sig, struct task_struct *t)
 {
 
 	struct task_comm *tc;
 
+	
+	if(sig == SIGKILL){
+		if((t->state & TASK_UNINTERRUPTIBLE) || (t->exit_state & EXIT_ZOMBIE)){
+			printk(KERN_WARNING "%s: %s(%d) send SIGKILL to %s(%d), but %s might not dead right now due to its %s state.\n",
+				__func__,
+				current->comm, current->pid,
+				t->comm, t->pid, t->comm,
+				(t->exit_state & EXIT_ZOMBIE) ? "Z" : "D");
+			if(t->exit_state & EXIT_ZOMBIE)
+				printk(KERN_WARNING "Please check its parent:%s(%d) or thread group.\n",
+					t->real_parent->comm, t->real_parent->pid);
+			
+			schedule_delayed_work(&show_block_state_struct, 1 * HZ);
+		}
+	}
+
 	if (t->comm) {
 		read_lock(&task_comm_lock);
 		list_for_each_entry(tc, &task_comm_list, list) {
-			if (sig != SIGCHLD && (!strcmp(t->comm, tc->comm)) ) {
+			if (sig != SIGCHLD && tc->comm && (!strncmp(t->comm, tc->comm, TASK_COMM_LEN)) ) {
 				printk("%s: %s(%d)[group %s(%d), parent %s(%d)] send signal %d to %s(%d)\n", __func__,
 					current->comm, current->pid,
 					(current->group_leader) ? current->group_leader->comm : "Unknown",
-					(current->group_leader) ? current->group_leader->pid : 0,
+					(current->group_leader) ? current->group_leader->pid : -1,
 					(current->parent) ? current->parent->comm : "Unknown",
-					(current->parent) ? current->parent->pid : 0,
+					(current->parent) ? current->parent->pid : -1,
 					sig,
 					t->comm, t->pid);
 				dump_stack();
+				break;
+			}
+		}
+		read_unlock(&task_comm_lock);
+	}
+}
+
+void do_group_exit_debug_dump(int exit_code)
+{
+	struct task_struct *t = (current->group_leader) ? current->group_leader : current;
+	struct task_comm *tc;
+
+	if (t->comm) {
+		read_lock(&task_comm_lock);
+		list_for_each_entry(tc, &task_comm_list, list) {
+			if (tc->comm && (!strncmp(t->comm, tc->comm, TASK_COMM_LEN)) ) {
+				printk(KERN_INFO "%s: %s(%d)[group %s(%d) parent %s(%d)] call exit with code %d\n", __func__,
+				current->comm, current->pid,
+				(current->group_leader) ? current->group_leader->comm : "Unknown",
+				(current->group_leader) ? current->group_leader->pid : -1,
+				(current->parent) ? current->parent->comm : "Unknown",
+				(current->parent) ? current->parent->pid : -1,
+				exit_code);
+				break;
 			}
 		}
 		read_unlock(&task_comm_lock);

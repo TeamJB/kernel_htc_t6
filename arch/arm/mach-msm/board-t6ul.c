@@ -170,8 +170,6 @@ extern void hdmi_hpd_feature(int enable);
 extern unsigned int engineerid;
 #endif
 
-extern unsigned htc_get_skuid(void);
-
 #define _GET_REGULATOR(var, name) do {				\
 	var = regulator_get(NULL, name);			\
 	if (IS_ERR(var)) {					\
@@ -4465,6 +4463,7 @@ static int fingerprint_set_power_control(int power_state)
 
         if(power_state == 1) 
         {
+
             
             gpio_set_value( PM8921_GPIO_PM_TO_SYS(8), 1);
             rc = gpio_get_value( PM8921_GPIO_PM_TO_SYS(8));
@@ -4872,54 +4871,11 @@ static struct i2c_board_info __initdata mpu3050_GSBI12_boardinfo[] = {
 };
 
 #ifdef CONFIG_SENSORS_NFC_PN544
-static void nfc_gpio_init(void)
-{
-	static uint32_t nfc_gpio_table[] = {
-	GPIO_CFG(MSM_NFC_IRQ, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
-	};
-	printk(KERN_INFO"[NFC] %s, config NFC_IRQ pin\n",__func__);
-	gpio_tlmm_config(nfc_gpio_table[0], GPIO_CFG_ENABLE);
-	return;
-}
-
-static void nfc_gpio_deinit(void)
-{
-	static uint32_t nfc_gpio_table[] = {
-	GPIO_CFG(MSM_NFC_IRQ, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	};
-	printk(KERN_INFO"[NFC] %s, config NFC_IRQ pin\n",__func__);
-	gpio_tlmm_config(nfc_gpio_table[0], GPIO_CFG_ENABLE);
-
-	gpio_set_value(PM8921_GPIO_PM_TO_SYS(PM_NFC_VEN), 0);
-	return;
-}
-
-#define WITHOUT_NFC_CHIP_T6U_CHINA 0x00037E08
-static int nfc_init_check(void)
-{
-	unsigned int htc_skuid = 0;
-
-	
-	htc_skuid = htc_get_skuid();
-
-	if ( WITHOUT_NFC_CHIP_T6U_CHINA == htc_skuid ) {
-		printk(KERN_INFO "%s: htc_skuid=[0x%08X], without NFC chip\n", __func__, htc_skuid);
-		return 0;
-	}
-	else {
-		printk(KERN_INFO "%s: htc_skuid=[0x%08X], with NFC chip.\n", __func__, htc_skuid);
-		return 1;
-	}
-}
-
 static struct pn544_i2c_platform_data nfc_platform_data = {
 	.irq_gpio = MSM_NFC_IRQ,
 	.ven_gpio = PM8921_GPIO_PM_TO_SYS(PM_NFC_VEN),
 	.firm_gpio = PM8921_GPIO_PM_TO_SYS(PM_NFC_DL_MODE),
 	.ven_isinvert = 1,
-	.gpio_init = nfc_gpio_init,
-	.gpio_deinit = nfc_gpio_deinit,
-	.check_nfc_exist = nfc_init_check,
 };
 
 static struct i2c_board_info pn544_i2c_boardinfo[] = {

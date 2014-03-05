@@ -1107,6 +1107,7 @@ static char common_setting[] = {
 
 static char cabc_still[] = {0xB9, 0x03, 0x82, 0x3C, 0x10, 0x3C, 0x87};
 static char cabc_movie[] = {0xBA, 0x03, 0x78, 0x64, 0x10, 0x64, 0xB4};
+static char cabc_bl_limit[] = {0x5E, 0x1E};
 static char SRE_Manual_0[] = {0xBB, 0x01, 0x00, 0x00};
 
 static char unlock_command[2] = {0xB0, 0x04}; 
@@ -1125,6 +1126,7 @@ static struct dsi_cmd_desc jdi_renesas_cmd_on_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 120, sizeof(exit_sleep), exit_sleep},
 	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(write_control_display), write_control_display},
 	{DTYPE_DCS_LWRITE, 1, 0, 0, 1, sizeof(Write_Content_Adaptive_Brightness_Control), Write_Content_Adaptive_Brightness_Control},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(cabc_bl_limit), cabc_bl_limit},
 	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(enable_te), enable_te},
 };
 
@@ -1140,6 +1142,7 @@ static struct dsi_cmd_desc jdi_renesas_cmd_on_cmds_c3[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 120, sizeof(exit_sleep), exit_sleep},
 	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(write_control_display), write_control_display},
 	{DTYPE_DCS_LWRITE, 1, 0, 0, 1, sizeof(Write_Content_Adaptive_Brightness_Control), Write_Content_Adaptive_Brightness_Control},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(cabc_bl_limit), cabc_bl_limit},
 	{DTYPE_DCS_WRITE1, 1, 0, 0, 1, sizeof(enable_te), enable_te},
 };
 static struct dsi_cmd_desc jdi_display_off_cmds[] = {
@@ -1806,6 +1809,7 @@ static int __init mipi_cmd_jdi_renesas_init(void)
 	return ret;
 }
 
+char *board_cid(void);
 static int __init mipi_cmd_jdi_renesas_init_c3(void)
 {
 	int ret;
@@ -1901,8 +1905,15 @@ static int __init mipi_cmd_jdi_renesas_init_c3(void)
 	set_cabc_Camera_cmds_count = ARRAY_SIZE(sharp_renesas_set_cabc_Video_cmds);
 #endif
 
-	mdp_gamma = mdp_gamma_renesas_c3;
-	mdp_gamma_count = ARRAY_SIZE(mdp_gamma_renesas_c3);
+	if (!strncmp(board_cid(), "CWS__001", 8) ||
+		!strncmp(board_cid(), "VZW__001", 8) ||
+		!strncmp(board_cid(), "SPCS_001", 8)) {
+		mdp_gamma = mdp_gamma_renesas;
+		mdp_gamma_count = ARRAY_SIZE(mdp_gamma_renesas);
+	} else {
+		mdp_gamma = mdp_gamma_renesas_c3;
+		mdp_gamma_count = ARRAY_SIZE(mdp_gamma_renesas_c3);
+	}
 
 	pwm_min = 6;
 	pwm_default = 81;

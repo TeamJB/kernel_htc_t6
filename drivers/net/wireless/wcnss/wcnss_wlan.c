@@ -196,6 +196,12 @@ wcnss_wlan_ctrl_probe(struct platform_device *pdev)
 	return 0;
 }
 
+void wcnss_flush_delayed_boot_votes(void)
+{
+	flush_delayed_work_sync(&penv->wcnss_work);
+}
+EXPORT_SYMBOL(wcnss_flush_delayed_boot_votes);
+
 static int __devexit
 wcnss_wlan_ctrl_remove(struct platform_device *pdev)
 {
@@ -425,6 +431,7 @@ fail_gpio_res:
 static int wcnss_node_open(struct inode *inode, struct file *file)
 {
 	struct platform_device *pdev;
+	int ret = 0;
 
 	pr_info(DEVICE " triggered by userspace (%p)\n", penv);
 
@@ -434,7 +441,14 @@ static int wcnss_node_open(struct inode *inode, struct file *file)
 	}
 
 	pdev = penv->pdev;
-	return wcnss_trigger_config(pdev);
+	ret = wcnss_trigger_config(pdev);
+	pr_err("wcnss_trigger_config ret = %d\n", ret);
+	if(ret != 0) {
+		panic("wcnss_trigger_config fail");
+		return ret;
+	} else {
+		return ret;
+	}
 }
 
 static const struct file_operations wcnss_node_fops = {

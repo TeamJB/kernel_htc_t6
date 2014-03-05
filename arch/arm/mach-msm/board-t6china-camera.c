@@ -240,14 +240,14 @@ static struct gpiomux_setting cam_settings[] = {
 #if defined(CONFIG_MACH_DUMMY) || defined(CONFIG_MACH_DUMMY) || defined(CONFIG_MACH_DUMMY)
 	{
 		.func = GPIOMUX_FUNC_2, 
-		.drv = GPIOMUX_DRV_10MA,
+		.drv = GPIOMUX_DRV_16MA,
 		
 		.pull = GPIOMUX_PULL_NONE,
 	},
 #else
 	{
 		.func = GPIOMUX_FUNC_2, 
-		.drv = GPIOMUX_DRV_8MA,
+		.drv = GPIOMUX_DRV_10MA,
 		
 		.pull = GPIOMUX_PULL_NONE,
 	},

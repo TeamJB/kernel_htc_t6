@@ -36,8 +36,6 @@
 #define D(fmt, args...) do {} while (0)
 #endif
 
-static uint32_t msg_print_cnt; 
-
 static int msm_vb2_ops_queue_setup(struct vb2_queue *vq,
 					const struct v4l2_format *fmt,
 					unsigned int *num_buffers,
@@ -273,8 +271,14 @@ static void msm_vb2_ops_buf_cleanup(struct vb2_buffer *vb)
 			mem = vb2_plane_cookie(vb, i);
 			if (!mem) { 
 				pr_err("%s: null pointer check, line(%d)", __func__, __LINE__);
+				buf->state = MSM_BUFFER_STATE_UNUSED;
 				return;
 			} 
+			if (!pmctl->client) {
+				pr_err("%s: null pointer check, line(%d)", __func__, __LINE__);
+				buf->state = MSM_BUFFER_STATE_UNUSED;
+				return;
+			}
 			videobuf2_pmem_contig_user_put(mem, pmctl->client);
 		}
 	}
@@ -442,6 +446,10 @@ int msm_mctl_buf_done_proc(
 	}
 
 	mem = vb2_plane_cookie(&buf->vidbuf, 0);
+	if (!mem) {
+		pr_err("%s: mem is null\n",__func__);
+		return -EINVAL;
+	}
 
 	if(pmctl->htc_af_info.af_input.preview_width*pmctl->htc_af_info.af_input.preview_height > mem->size)
 	    pmctl->htc_af_info.af_input.af_use_sw_sharpness = false;
@@ -524,9 +532,6 @@ int msm_mctl_buf_init(struct msm_cam_v4l2_device *pcam)
 	pmctl = msm_camera_get_mctl(pcam->mctl_handle);
 	if(!pmctl) return 0;
 	pmctl->mctl_vbqueue_init = msm_vbqueue_init;
-	msg_print_cnt = 0; 
-	pr_info("%s: init msg_print_cnt with 0", __func__); 
-
 	return 0;
 }
 
@@ -578,11 +583,10 @@ struct msm_cam_v4l2_dev_inst *msm_mctl_get_pcam_inst(
 				D("%s Found instance %p in video device",
 				__func__, pcam_inst);
 			}
-			else if (msg_print_cnt < 10) { 
-				pr_err("%s image_node %d (%d)\n", __func__, image_mode, __LINE__);
-				pr_err("%s mctl_node.dev_inst_map %p\n", __func__, pcam->mctl_node.dev_inst_map[image_mode]);
-				pr_err("%s dev_inst_map %p\n", __func__, pcam->dev_inst_map[image_mode]);
-				msg_print_cnt++;
+			else { 
+				pr_info("%s image_node %d\n", __func__, image_mode);
+				pr_info("%s mctl_node.dev_inst_map %p\n", __func__, pcam->mctl_node.dev_inst_map[image_mode]);
+				pr_info("%s dev_inst_map %p\n", __func__, pcam->dev_inst_map[image_mode]);
 			}
 		} else {
 			if (pcam->mctl_node.dev_inst_map[image_mode]) {
@@ -597,11 +601,10 @@ struct msm_cam_v4l2_dev_inst *msm_mctl_get_pcam_inst(
 				D("%s Found instance %p in video device",
 				__func__, pcam_inst);
 			}
-			else if (msg_print_cnt < 10) { 
-				pr_err("%s image_node %d (%d)\n", __func__, image_mode, __LINE__);
-				pr_err("%s mctl_node.dev_inst_map %p\n", __func__, pcam->mctl_node.dev_inst_map[image_mode]);
-				pr_err("%s dev_inst_map %p\n", __func__, pcam->dev_inst_map[image_mode]);
-				msg_print_cnt++;
+			else { 
+				pr_info("%s image_node %d\n", __func__, image_mode);
+				pr_info("%s mctl_node.dev_inst_map %p\n", __func__, pcam->mctl_node.dev_inst_map[image_mode]);
+				pr_info("%s dev_inst_map %p\n", __func__, pcam->dev_inst_map[image_mode]);
 			}
 		}
 	} else
