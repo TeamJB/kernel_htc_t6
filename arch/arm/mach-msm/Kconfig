@@ -3071,6 +3071,12 @@ config MACH_T6_UL
         help
           Support for the HTC APQ8064 T6_UL.
 
+config MACH_T6_WL
+        depends on ARCH_APQ8064
+        bool "APQ8064 T6_WL"
+        help
+          Support for the HTC APQ8064 T6_WL.
+
 config MACH_T6_WHL
         depends on ARCH_APQ8064
         bool "APQ8064 T6_WHL"
